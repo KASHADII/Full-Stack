@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive SVG Drawing Tool</title>
+  <style>
+    :root{
+      --bg:#f5f7fb; --card:#ffffff; --ink:#222; --accent:#4f46e5;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      background:var(--bg); font-family:system-ui, Arial, sans-serif; color:var(--ink);
+      padding:16px;
+    }
+    .app{
+      width:100%; max-width:920px; background:var(--card); border-radius:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden;
+    }
+    header, footer{
+      padding:12px 18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+      border-bottom:1px solid #e8ecf4;
+    }
+    footer{ border-top:1px solid #e8ecf4; border-bottom:none; justify-content:space-between }
+    h1{ font-size:1.05rem; margin:0; font-weight:700 }
+    .controls{ margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+    .select, .btn{
+      appearance:none; border:1px solid #d9dfec; background:#fff; color:#111;
+      padding:8px 12px; border-radius:10px; font:inherit; cursor:pointer;
+    }
+    .btn.primary{ background:var(--accent); color:#fff; border-color:transparent }
+    .canvas-wrap{ padding:16px; background:#f8fafc }
+    .canvas{
+      width:100%; aspect-ratio:16/9; background:#fff; border:1px dashed #cdd6e4; border-radius:12px;
+      display:block;
+    }
+    .hint{ font-size:.9rem; color:#5b6472 }
+    @media (max-width:600px){ .canvas{ aspect-ratio:4/3 } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Interactive SVG Drawing Tool</h1>
+      <div class="controls">
+        <label for="shape">Shape:</label>
+        <select id="shape" class="select" aria-label="Select shape">
+          <option value="rect" selected>Rectangle</option>
+          <option value="line">Line</option>
+        </select>
+
+        <label for="strokeWidth">Stroke:</label>
+        <select id="strokeWidth" class="select" aria-label="Select stroke width">
+          <option>2</option><option selected>3</option><option>4</option><option>6</option>
+        </select>
+
+        <button id="clear" class="btn">Clear</button>
+        <button id="download" class="btn primary">Download SVG</button>
+      </div>
+    </header>
+
+    <div class="canvas-wrap">
+      <!-- SVG Drawing Area -->
+      <svg id="canvas" class="canvas" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Drawing canvas">
+        <defs>
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#eef2f7" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)"/>
+        <!-- Drawn shapes will be appended here -->
+      </svg>
+    </div>
+
+    <footer>
+      <div class="hint">Hint: Click & drag to draw. Release to finish. Repeat to add more shapes.</div>
+      <div class="hint">Uses <code>mousedown</code>, <code>mousemove</code>, <code>mouseup</code> with live updates.</div>
+    </footer>
+  </div>
+
+  <script>
+    const svgNS = "http://www.w3.org/2000/svg";
+    const canvas = document.getElementById("canvas");
+    const shapeSelect = document.getElementById("shape");
+    const strokeWidthSelect = document.getElementById("strokeWidth");
+    const clearBtn = document.getElementById("clear");
+    const downloadBtn = document.getElementById("download");
+
+    let drawing = false;
+    let start = { x: 0, y: 0 };
+    let currentShapeEl = null;
+
+    // Convert mouse position to SVG coordinate space
+    function getSVGPoint(evt) {
+      const pt = canvas.createSVGPoint();
+      pt.x = evt.clientX;
+      pt.y = evt.clientY;
+      const screenCTM = canvas.getScreenCTM();
+      return pt.matrixTransform(screenCTM.inverse());
+    }
+
+    function onMouseDown(e) {
+      if (e.button !== 0) return; // left click only
+      drawing = true;
+      const p = getSVGPoint(e);
+      start = { x: p.x, y: p.y };
+
+      const strokeWidth = parseFloat(strokeWidthSelect.value || "3");
+
+      if (shapeSelect.value === "rect") {
+        currentShapeEl = document.createElementNS(svgNS, "rect");
+        currentShapeEl.setAttribute("x", start.x);
+        currentShapeEl.setAttribute("y", start.y);
+        currentShapeEl.setAttribute("width", 0);
+        currentShapeEl.setAttribute("height", 0);
+        currentShapeEl.setAttribute("fill", "rgba(79,70,229,0.12)");
+        currentShapeEl.setAttribute("stroke", "#4f46e5");
+        currentShapeEl.setAttribute("stroke-width", strokeWidth);
+        currentShapeEl.setAttribute("rx", 6);
+      } else { // line
+        currentShapeEl = document.createElementNS(svgNS, "line");
+        currentShapeEl.setAttribute("x1", start.x);
+        currentShapeEl.setAttribute("y1", start.y);
+        currentShapeEl.setAttribute("x2", start.x);
+        currentShapeEl.setAttribute("y2", start.y);
+        currentShapeEl.setAttribute("stroke", "#111827");
+        currentShapeEl.setAttribute("stroke-width", strokeWidth);
+        currentShapeEl.setAttribute("stroke-linecap", "round");
+      }
+
+      currentShapeEl.style.pointerEvents = "none"; // don't block drawing
+      canvas.appendChild(currentShapeEl);
+    }
+
+    function onMouseMove(e) {
+      if (!drawing || !currentShapeEl) return;
+      const p = getSVGPoint(e);
+
+      if (currentShapeEl.tagName === "rect") {
+        const x = Math.min(p.x, start.x);
+        const y = Math.min(p.y, start.y);
+        const w = Math.abs(p.x - start.x);
+        const h = Math.abs(p.y - start.y);
+        currentShapeEl.setAttribute("x", x);
+        currentShapeEl.setAttribute("y", y);
+        currentShapeEl.setAttribute("width", w);
+        currentShapeEl.setAttribute("height", h);
+      } else if (currentShapeEl.tagName === "line") {
+        currentShapeEl.setAttribute("x2", p.x);
+        currentShapeEl.setAttribute("y2", p.y);
+      }
+    }
+
+    function onMouseUp() {
+      drawing = false;
+      currentShapeEl = null;
+    }
+
+    function onMouseLeave() {
+      // Finish drawing if cursor leaves the canvas while dragging
+      if (drawing) onMouseUp();
+    }
+
+    // Clear all drawn shapes (keep grid background)
+    function clearCanvas() {
+      const toRemove = Array.from(canvas.querySelectorAll("rect, line")).filter(
+        el => !el.hasAttribute("width") || el.getAttribute("width") !== "100%"
+      );
+      toRemove.forEach(el => canvas.removeChild(el));
+    }
+
+    // Download current SVG
+    function downloadSVG() {
+      const serializer = new XMLSerializer();
+      const source = serializer.serializeToString(canvas);
+      const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "drawing.svg";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Event listeners
+    canvas.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener("mouseleave", onMouseLeave);
+    clearBtn.addEventListener("click", clearCanvas);
+    downloadBtn.addEventListener("click", downloadSVG);
+
+    // Accessibility: allow drawing with touch as well
+    canvas.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      onMouseDown(t);
+      e.preventDefault();
+    }, { passive:false });
+
+    window.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      onMouseMove(t);
+      e.preventDefault();
+    }, { passive:false });
+
+    window.addEventListener("touchend", () => onMouseUp());
+  </script>
+</body>
+</html>
