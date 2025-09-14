@@ -1,0 +1,154 @@
+import React, { useState } from "react";
+
+function LibraryApp() {
+  const [books, setBooks] = useState([
+    { id: 1, title: "1984", author: "George Orwell" },
+    { id: 2, title: "The Great Gatsby", author: "F. Scott Fitzgerald" },
+    { id: 3, title: "To Kill a Mockingbird", author: "Harper Lee" },
+  ]);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [newAuthor, setNewAuthor] = useState("");
+
+  // Add new book
+  const addBook = () => {
+    if (newTitle.trim() && newAuthor.trim()) {
+      const newBook = {
+        id: Date.now(),
+        title: newTitle,
+        author: newAuthor,
+      };
+      setBooks([...books, newBook]);
+      setNewTitle("");
+      setNewAuthor("");
+    }
+  };
+
+  // Remove book
+  const removeBook = (id) => {
+    setBooks(books.filter((book) => book.id !== id));
+  };
+
+  // Filter books based on search term
+  const filteredBooks = books.filter((book) =>
+    `${book.title} ${book.author}`.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div style={styles.container}>
+      <h2 style={styles.heading}>Library Management</h2>
+
+      {/* Search Box */}
+      <input
+        type="text"
+        placeholder="Search by title or author"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={styles.input}
+      />
+
+      {/* Add Book Form */}
+      <div style={styles.addForm}>
+        <input
+          type="text"
+          placeholder="New book title"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          style={styles.input}
+        />
+        <input
+          type="text"
+          placeholder="New book author"
+          value={newAuthor}
+          onChange={(e) => setNewAuthor(e.target.value)}
+          style={styles.input}
+        />
+        <button onClick={addBook} style={styles.addButton}>
+          Add Book
+        </button>
+      </div>
+
+      {/* Book List */}
+      <div>
+        {filteredBooks.length > 0 ? (
+          filteredBooks.map((book) => (
+            <div key={book.id} style={styles.bookCard}>
+              <p>
+                <strong>{book.title}</strong> by {book.author}
+              </p>
+              <button onClick={() => removeBook(book.id)} style={styles.removeButton}>
+                Remove
+              </button>
+            </div>
+          ))
+        ) : (
+          <p style={{ color: "gray" }}>No books found.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Inline styles for simplicity
+const styles = {
+  container: {
+    border: "1px solid #ccc",
+    padding: "16px",
+    margin: "20px",
+    width: "400px",
+    fontFamily: "Arial",
+  },
+  heading: {
+    marginBottom: "10px",
+  },
+  input: {
+    padding: "8px",
+    marginBottom: "8px",
+    width: "100%",
+    boxSizing: "border-box",
+  },
+  addForm: {
+    display: "flex",
+    gap: "8px",
+    marginBottom: "16px",
+  },
+  addButton: {
+    padding: "8px 12px",
+    backgroundColor: "#4CAF50",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+  },
+  bookCard: {
+    display: "flex",
+    justifyContent: "space-between",
+    border: "1px solid #ddd",
+    padding: "8px",
+    borderRadius: "5px",
+    marginBottom: "8px",
+    backgroundColor: "#f9f9f9",
+  },
+  removeButton: {
+    backgroundColor: "#e74c3c",
+    color: "white",
+    border: "none",
+    padding: "5px 8px",
+    cursor: "pointer",
+  },
+};
+
+export default LibraryApp;
+// App.jsx
+import React from "react";
+import LibraryApp from "./LibraryApp";
+
+function App() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
+      <LibraryApp />
+    </div>
+  );
+}
+
+export default App;
