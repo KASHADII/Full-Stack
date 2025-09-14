@@ -1,0 +1,73 @@
+// ProductCard.jsx
+import React from "react";
+
+function ProductCard({ name, price, inStock }) {
+  return (
+    <div style={styles.card}>
+      <h3 style={{ fontWeight: "bold" }}>{name}</h3>
+      <p>Price: ${price}</p>
+      <p>Status: {inStock ? "In Stock" : "Out of Stock"}</p>
+    </div>
+  );
+}
+
+const styles = {
+  card: {
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    padding: "16px",
+    width: "180px",
+    textAlign: "center",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+    background: "#fff",
+  },
+};
+
+export default ProductCard;
+// App.jsx
+import React from "react";
+import ProductCard from "./ProductCard";
+
+function App() {
+  const products = [
+    { name: "Wireless Mouse", price: 25.99, inStock: true },
+    { name: "Keyboard", price: 45.5, inStock: false },
+    { name: "Monitor", price: 199.99, inStock: true },
+  ];
+
+  return (
+    <div style={styles.container}>
+      <h2 style={styles.title}>Products List</h2>
+      <div style={styles.grid}>
+        {products.map((p, index) => (
+          <ProductCard
+            key={index}
+            name={p.name}
+            price={p.price}
+            inStock={p.inStock}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    border: "1px solid black",
+    padding: "20px",
+    margin: "20px",
+    textAlign: "center",
+  },
+  title: {
+    marginBottom: "20px",
+  },
+  grid: {
+    display: "flex",
+    gap: "20px",
+    justifyContent: "center",
+  },
+};
+
+export default App;
+
