@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Person / Student / Teacher Demo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      padding: 24px;
+      background: #f6f7fb;
+      color: #111827;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+      padding: 16px;
+      margin-bottom: 16px;
+      max-width: 900px;
+    }
+    h1 { margin: 0 0 12px 0; font-size: 20px; }
+    label { display:block; margin-top:8px; font-size:14px; }
+    input[type="text"], input[type="number"], select {
+      padding:8px;
+      margin-top:6px;
+      width:100%;
+      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius:6px;
+    }
+    .row { display:flex; gap:12px; }
+    .row > * { flex:1; }
+    button {
+      padding:8px 12px;
+      border-radius:6px;
+      border: none;
+      cursor:pointer;
+      background:#0ea5a4;
+      color: white;
+      font-weight:600;
+    }
+    button.danger { background:#ef4444; }
+    #output {
+      white-space: pre-wrap;
+      background:#0b1220;
+      color:#e6eef6;
+      padding:12px;
+      border-radius:6px;
+      min-height:120px;
+      overflow:auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+    }
+    .flex-between { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    small.note { color:#6b7280; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Person / Student / Teacher — Inheritance Demo</h1>
+    <p class="note"><small>ES6 classes with constructor chaining, overriding, and an interactive UI to create instances and call methods.</small></p>
+
+    <div style="margin-top:12px;">
+      <div class="flex-between">
+        <div style="flex:1; margin-right:12px;">
+          <button id="createSamples">Create sample instances</button>
+        </div>
+        <div style="width:220px;">
+          <button id="callBase" style="width:100%;">Call Person.displayInfo on selected</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:16px; margin-bottom:10px;">Add a Student</h2>
+    <div class="row">
+      <div>
+        <label>Student Name</label>
+        <input id="studentName" type="text" placeholder="e.g. Alice" />
+      </div>
+      <div>
+        <label>Age</label>
+        <input id="studentAge" type="number" min="1" placeholder="20" />
+      </div>
+      <div>
+        <label>Course</label>
+        <input id="studentCourse" type="text" placeholder="Computer Science" />
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <button id="addStudent">Add Student</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:16px; margin-bottom:10px;">Add a Teacher</h2>
+    <div class="row">
+      <div>
+        <label>Teacher Name</label>
+        <input id="teacherName" type="text" placeholder="e.g. Mr. John" />
+      </div>
+      <div>
+        <label>Age</label>
+        <input id="teacherAge" type="number" min="18" placeholder="40" />
+      </div>
+      <div>
+        <label>Subject</label>
+        <input id="teacherSubject" type="text" placeholder="Mathematics" />
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <button id="addTeacher">Add Teacher</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:16px; margin-bottom:10px;">Instances</h2>
+    <div style="display:flex; gap:12px; align-items:flex-start;">
+      <div style="flex:1;">
+        <select id="instancesList" size="8" style="width:100%;"></select>
+      </div>
+      <div style="width:160px;">
+        <button id="showInfo" style="width:100%; margin-bottom:8px;">Show Info</button>
+        <button id="removeInstance" class="danger" style="width:100%; margin-bottom:8px;">Remove</button>
+        <button id="clearOutput" style="width:100%;">Clear Output</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:16px; margin-bottom:10px;">Output</h2>
+    <div id="output">Output will appear here...</div>
+  </div>
+
+  <script>
+    // --- Classes: Person, Student, Teacher ---
+    class Person {
+      constructor(name = "Unknown", age = 0) {
+        this.name = name;
+        this.age = age;
+      }
+
+      displayInfo() {
+        return `Name: ${this.name}, Age: ${this.age}`;
+      }
+    }
+
+    class Student extends Person {
+      constructor(name, age, course = "Undeclared") {
+        super(name, age);
+        this.course = course;
+      }
+
+      // override
+      displayInfo() {
+        return `🎓 Student -> Name: ${this.name}, Age: ${this.age}, Course: ${this.course}`;
+      }
+    }
+
+    class Teacher extends Person {
+      constructor(name, age, subject = "General") {
+        super(name, age);
+        this.subject = subject;
+      }
+
+      // override
+      displayInfo() {
+        return `👩‍🏫 Teacher -> Name: ${this.name}, Age: ${this.age}, Subject: ${this.subject}`;
+      }
+    }
+
+    // --- App state (simple) ---
+    const instances = []; // store { id, instance, type }
+    const outputEl = document.getElementById('output');
+    const instancesList = document.getElementById('instancesList');
+
+    function log(...args) {
+      const line = args.join(' ');
+      outputEl.textContent = (outputEl.textContent === "Output will appear here..." ? "" : outputEl.textContent + "\n") + line;
+      outputEl.scrollTop = outputEl.scrollHeight;
+      console.log(...args);
+    }
+
+    function addInstance(instance, type) {
+      const id = Date.now() + Math.floor(Math.random()*1000);
+      instances.push({ id, instance, type });
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.text = `${type} — ${instance.name}`;
+      instancesList.appendChild(opt);
+      return id;
+    }
+
+    function findInstanceById(id) {
+      return instances.find(i => String(i.id) === String(id));
+    }
+
+    function removeSelectedInstance() {
+      const sel = instancesList.value;
+      if (!sel) { alert('Select an instance to remove'); return; }
+      const idx = instances.findIndex(i => String(i.id) === String(sel));
+      if (idx >= 0) {
+        instances.splice(idx, 1);
+        instancesList.remove(instancesList.selectedIndex);
+        log(`Removed instance id=${sel}`);
+      }
+    }
+
+    // --- Event handlers for UI ---
+    document.getElementById('createSamples').addEventListener('click', () => {
+      const s1 = new Student("Alice", 20, "Computer Science");
+      const t1 = new Teacher("Mr. John", 40, "Mathematics");
+      addInstance(s1, 'Student');
+      addInstance(t1, 'Teacher');
+      log('Sample instances created: Alice (Student), Mr. John (Teacher)');
+    });
+
+    document.getElementById('addStudent').addEventListener('click', () => {
+      const name = document.getElementById('studentName').value.trim() || "StudentX";
+      const age = parseInt(document.getElementById('studentAge').value) || 18;
+      const course = document.getElementById('studentCourse').value.trim() || "General";
+      const s = new Student(name, age, course);
+      addInstance(s, 'Student');
+      log(`Added Student: ${s.displayInfo()}`);
+      // clear inputs
+      document.getElementById('studentName').value = '';
+      document.getElementById('studentAge').value = '';
+      document.getElementById('studentCourse').value = '';
+    });
+
+    document.getElementById('addTeacher').addEventListener('click', () => {
+      const name = document.getElementById('teacherName').value.trim() || "TeacherX";
+      const age = parseInt(document.getElementById('teacherAge').value) || 30;
+      const subject = document.getElementById('teacherSubject').value.trim() || "General";
+      const t = new Teacher(name, age, subject);
+      addInstance(t, 'Teacher');
+      log(`Added Teacher: ${t.displayInfo()}`);
+      // clear inputs
+      document.getElementById('teacherName').value = '';
+      document.getElementById('teacherAge').value = '';
+      document.getElementById('teacherSubject').value = '';
+    });
+
+    document.getElementById('showInfo').addEventListener('click', () => {
+      const sel = instancesList.value;
+      if (!sel) { alert('Select an instance from the list'); return; }
+      const found = findInstanceById(sel);
+      if (found) {
+        // Call the instance's overridden method
+        log(found.instance.displayInfo());
+      }
+    });
+
+    document.getElementById('removeInstance').addEventListener('click', () => {
+      removeSelectedInstance();
+    });
+
+    document.getElementById('callBase').addEventListener('click', () => {
+      const sel = instancesList.value;
+      if (!sel) { alert('Select an instance to call base method'); return; }
+      const found = findInstanceById(sel);
+      if (found) {
+        // Call base class (Person) method explicitly using call
+        const baseResult = Person.prototype.displayInfo.call(found.instance);
+        log(`(Base Person.displayInfo) -> ${baseResult}`);
+      }
+    });
+
+    document.getElementById('clearOutput').addEventListener('click', () => {
+      outputEl.textContent = '';
+    });
+
+    // create initial examples on load
+    window.addEventListener('load', () => {
+      const s = new Student("Alice", 20, "Computer Science");
+      const t = new Teacher("Mr. John", 40, "Mathematics");
+      addInstance(s, 'Student');
+      addInstance(t, 'Teacher');
+      log('Loaded demo with two default instances (Alice & Mr. John). Use the UI to add more.');
+    });
+  </script>
+</body>
+</html>
